@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:trendwave/models/news.dart';
 
 import 'news_card.dart';
 
 class AllNews extends StatelessWidget {
-  AllNews({Key? key, required this.title}) : super(key: key);
+  AllNews({Key? key, required this.title, required this.newsData})
+      : super(key: key);
 
+  final Future<News> newsData;
   final String title;
 
   @override
@@ -13,18 +16,30 @@ class AllNews extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
       ),
-      body: FutureBuilder<Widget>(
+      body: FutureBuilder<News>(
+        future: newsData,
         builder: (context, snapshot) {
-          return SingleChildScrollView(
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 20,
-              itemBuilder: (context, index) {
-                return const NewsCard();
-              },
-            ),
-          );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            final newsList = snapshot.data?.data ?? [];
+            if (newsList.isEmpty) {
+              return const Center(child: Text('No results found.'));
+            } else {
+              return SingleChildScrollView(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: newsList.length,
+                  itemBuilder: (context, index) {
+                    return NewsCard(article: newsList[index]);
+                  },
+                ),
+              );
+            }
+          }
         },
       ),
     );

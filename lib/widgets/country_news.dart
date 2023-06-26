@@ -1,8 +1,12 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:trendwave/widgets/news/news_card.dart';
+import 'package:trendwave/services/news_service.dart';
+import 'package:trendwave/models/news.dart';
+
 import '../utils/country_selector.dart';
 import 'news/all_news.dart';
-import 'news/news_card.dart';
 
 class CountryNews extends StatefulWidget {
   const CountryNews({Key? key}) : super(key: key);
@@ -12,6 +16,7 @@ class CountryNews extends StatefulWidget {
 }
 
 class _CountryNewsState extends State<CountryNews> {
+  late Future<News> newsData;
   late String selectedCountryCode;
   late String title =
       "News from ${countryList.firstWhere((country) => country["code"] == selectedCountryCode)["name"]}";
@@ -20,6 +25,10 @@ class _CountryNewsState extends State<CountryNews> {
   void initState() {
     super.initState();
     selectedCountryCode = _getRandomCountryCode();
+    newsData = fetchNewsDataByCountry(
+      selectedCountryCode,
+      limit: 10,
+    );
   }
 
   String _getRandomCountryCode() {
@@ -34,6 +43,7 @@ class _CountryNewsState extends State<CountryNews> {
       MaterialPageRoute(
         builder: (context) => AllNews(
           title: title,
+          newsData: newsData,
         ),
       ),
     );
@@ -66,16 +76,30 @@ class _CountryNewsState extends State<CountryNews> {
         const Padding(
           padding: EdgeInsets.only(bottom: 18.0),
         ),
-        FutureBuilder<Widget>(builder: (context, snapshot) {
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 20,
-            itemBuilder: (context, index) {
-              return const NewsCard();
-            },
-          );
-        }),
+        FutureBuilder<News>(
+          future: newsData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              final newsList = snapshot.data?.data ?? [];
+              if (newsList.isEmpty) {
+                return const Center(child: Text('No results found.'));
+              } else {
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: newsList.length,
+                  itemBuilder: (context, index) {
+                    return NewsCard(article: newsList[index]);
+                  },
+                );
+              }
+            }
+          },
+        ),
       ],
     );
   }

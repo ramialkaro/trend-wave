@@ -3,6 +3,8 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../news/all_news.dart';
 import 'source_news_card.dart';
+import 'package:trendwave/services/news_service.dart';
+import 'package:trendwave/models/news.dart';
 
 class SourceNews extends StatefulWidget {
   const SourceNews({Key? key}) : super(key: key);
@@ -12,11 +14,13 @@ class SourceNews extends StatefulWidget {
 }
 
 class _SourceNewsState extends State<SourceNews> {
+  late Future<News> newsData;
   late String title = "News by CNN";
 
   @override
   void initState() {
     super.initState();
+    newsData = fetchNewsDataBySource('cnn', limit: 4);
   }
 
   @override
@@ -37,7 +41,8 @@ class _SourceNewsState extends State<SourceNews> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AllNews(title: title),
+                    builder: (context) =>
+                        AllNews(title: title, newsData: newsData),
                   ),
                 );
               },
@@ -51,32 +56,51 @@ class _SourceNewsState extends State<SourceNews> {
         const SizedBox(
           height: 10,
         ),
-        FutureBuilder<Widget>(
+        FutureBuilder<News>(
+          future: newsData,
           builder: (context, snapshot) {
-            return SizedBox(
-              height: 230,
-              child: PageView.builder(
-                controller: controller,
-                itemCount: 6,
-                itemBuilder: (context, index) {
-                  return const SourceNewsCard();
-                },
-              ),
-            );
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else {
+              final articles = snapshot.data?.data ?? [];
+              final pageCount = articles.length;
+              return SizedBox(
+                height: 230,
+                child: PageView.builder(
+                  controller: controller,
+                  itemCount: pageCount,
+                  itemBuilder: (context, index) {
+                    final article = articles[index];
+                    return SourceNewsCard(article: article);
+                  },
+                ),
+              );
+            }
           },
         ),
-        FutureBuilder<Widget>(
+        FutureBuilder<News>(
+          future: newsData,
           builder: (context, snapshot) {
-            return SmoothPageIndicator(
-              controller: controller,
-              count: 6,
-              effect: const ExpandingDotsEffect(
-                activeDotColor: Colors.blueGrey,
-                dotColor: Colors.black12,
-                dotHeight: 10,
-                dotWidth: 10,
-              ),
-            );
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox();
+            } else if (snapshot.hasError) {
+              return const SizedBox();
+            } else {
+              final articles = snapshot.data?.data ?? [];
+              final pageCount = articles.length;
+              return SmoothPageIndicator(
+                controller: controller,
+                count: pageCount,
+                effect: const ExpandingDotsEffect(
+                  activeDotColor: Colors.blueGrey,
+                  dotColor: Colors.black12,
+                  dotHeight: 10,
+                  dotWidth: 10,
+                ),
+              );
+            }
           },
         ),
       ],

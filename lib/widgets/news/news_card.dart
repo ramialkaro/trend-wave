@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/news.dart';
 import '../news_details.dart';
 
 class NewsCard extends StatelessWidget {
-  const NewsCard({Key? key}) : super(key: key);
+  const NewsCard({Key? key, required this.article}) : super(key: key);
 
+  final Article article;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -14,7 +16,7 @@ class NewsCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const NewsDetails(),
+            builder: (context) => NewsDetails(article: article),
           ),
         );
       },
@@ -29,9 +31,9 @@ class NewsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   width: 100,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(
+                      image: NetworkImage(article.image ??
                           'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1122&q=80'),
                       fit: BoxFit.cover,
                       scale: 1.0,
@@ -47,11 +49,11 @@ class NewsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "SPORTS",
+                        article.category.toUpperCase(),
                         style: GoogleFonts.playfairDisplay(color: Colors.grey),
                       ),
                       Text(
-                        "NEWS HEADLINE",
+                        article.title,
                         maxLines: 2,
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 15.0,
@@ -59,7 +61,8 @@ class NewsCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        "Author name ${DateFormat('MMM d, yyyy').format(DateTime.now())}",
+                        article.author?.toString() ??
+                            " ${DateFormat('MMM d, yyyy').format(article.published_at)}",
                         style: GoogleFonts.openSans(color: Colors.grey),
                       ),
                     ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trendwave/models/news.dart';
+import 'package:trendwave/services/news_service.dart';
 
 import '../news/news_card.dart';
 
@@ -23,21 +25,25 @@ class _DiscoverWrapperState extends State<DiscoverWrapper> {
 
   String? selectedFilter;
   String? searchQuery;
+  late Future<News> newsData;
 
   @override
   void initState() {
     super.initState();
+    newsData = fetchNewsData();
   }
 
   Future<void> filterByCategory(String category) async {
     setState(() {
       selectedFilter = category;
+      newsData = fetchNewsDataByCategory(category.toLowerCase());
     });
   }
 
   Future<void> filterByByQuery(String query) async {
     setState(() {
       searchQuery = query;
+      newsData = fetchNewsDataByQuery(query);
     });
   }
 
@@ -84,6 +90,7 @@ class _DiscoverWrapperState extends State<DiscoverWrapper> {
                         onPressed: () {
                           setState(() {
                             searchQuery = null;
+                            newsData = fetchNewsData();
                           });
                         },
                       )
@@ -123,14 +130,28 @@ class _DiscoverWrapperState extends State<DiscoverWrapper> {
             ),
             const SizedBox(height: 16.0),
             Expanded(
-              child: FutureBuilder<Widget>(
+              child: FutureBuilder<News>(
+                future: newsData,
                 builder: (context, snapshot) {
-                  return ListView.builder(
-                    itemCount: 14,
-                    itemBuilder: (context, index) {
-                      return const NewsCard();
-                    },
-                  );
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    final newsList = snapshot.data?.data ?? [];
+                    if (newsList.isEmpty) {
+                      return const Center(child: Text('No results found.'));
+                    } else {
+                      return ListView.builder(
+                        itemCount: newsList.length,
+                        itemBuilder: (context, index) {
+                          return NewsCard(
+                            article: newsList[index],
+                          );
+                        },
+                      );
+                    }
+                  }
                 },
               ),
             ),
