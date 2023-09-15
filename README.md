@@ -14,6 +14,11 @@ Trend Wave is a news app that allows users to stay updated with the latest news 
 
 - **Sorting:** Sort news articles based on different criteria such as date, popularity, or relevance.
 
+## YouTube Videos: 
+Mock up: https://youtu.be/tCMkeJqMafc
+
+FETCH DATA: https://youtu.be/9CR5oJbpEtQ
+
 ## Screenshots
 <div>
   <img src="screenshots/home_screen.png" alt="Home Screen" width="300" height="600">  
